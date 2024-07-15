@@ -11,8 +11,6 @@ markers = [
     "serial",
 ]
 
-[tool.isort]
-
 [tool.ruff.lint]
 select = ["ALL"]
 

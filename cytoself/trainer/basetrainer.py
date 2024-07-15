@@ -15,13 +15,12 @@ from tqdm import tqdm
 
 
 class BaseTrainer:
-    """ Base class for Trainer."""
+    """Base class for Trainer."""
 
     def __init__(
-        self, train_args: dict, homepath: str = './', device: Optional[str] = None, model: Optional = None, **kwargs
-    ):
-        """
-        Base class for trainer
+        self, train_args: dict, homepath: str = "./", device: Optional[str] = None, model: Optional = None, **kwargs
+    ) -> None:
+        """Base class for trainer.
 
         Parameters
         ----------
@@ -35,7 +34,7 @@ class BaseTrainer:
             An autoencoder model instance
         """
         if device is None:
-            self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+            self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         else:
             self.device = torch.device(device)
 
@@ -45,20 +44,18 @@ class BaseTrainer:
         self.lr = 0
         self.tb_writer = None
         self.optimizer = None
-        self.savepath_dict = {'homepath': homepath}
+        self.savepath_dict = {"homepath": homepath}
         self.current_epoch = 1
         self.history = pd.DataFrame()
         if model is not None:
             self._init_model(model)
 
-    def _init_model(self, model):
-        """
-        Initializes model.
+    def _init_model(self, model: any) -> None:
+        """Initialize the model with the specified configuration settings.
 
         Parameters
         ----------
-        model : model object
-            The autoencoder model
+        - model: The model object to be initialized.
 
         """
         self.model = model
@@ -68,16 +65,21 @@ class BaseTrainer:
         self.set_optimizer(**self.train_args)
         self.init_savepath()
 
-    def _default_train_args(self):
-        """
-        Sets default training arguments to make sure the model trainer has at least the following arguments.
+    def _default_train_args(self) -> None:
+        """Set default training arguments to ensure the model trainer has at least the specified arguments.
+
+        Parameters
+        ----------
+        - trainer: The model trainer object that will be used for training.
+        - args (dict, optional): A dictionary of arguments to set. If not provided, default arguments will be used.
+
         """
         args = {
-            'reducelr_patience': 4,
-            'reducelr_increment': 0.1,
-            'earlystop_patience': 12,
-            'min_lr': 1e-8,
-            'max_epoch': 100,
+            "reducelr_patience": 4,
+            "reducelr_increment": 0.1,
+            "earlystop_patience": 12,
+            "min_lr": 1e-8,
+            "max_epoch": 100,
         }
         for key, val in args.items():
             if key not in self.train_args:
@@ -92,8 +94,7 @@ class BaseTrainer:
         optimize: bool = False,
         **kwargs,
     ) -> dict:
-        """
-        Computes loss for one batch
+        """Computes loss for one batch.
 
         Parameters
         ----------
@@ -127,7 +128,7 @@ class BaseTrainer:
         if optimize:
             self.optimizer.step()
 
-        return {'loss': loss.item()}
+        return {"loss": loss.item()}
 
     def _calc_losses(self, model_outputs, img, *args, **kwargs):
         return nn.MSELoss(**kwargs)(model_outputs, img)
@@ -531,7 +532,7 @@ class BaseTrainer:
         torch.save(model.state_dict() if by_weights else model, fpath)
         print('A model has been saved at ' + fpath)
 
-    def load_model(self, path: str, by_weights: bool = True):
+    def load_model(self, path: str, by_weights: bool = True) -> None:
         """
         Load a pytorch model
 
@@ -547,12 +548,11 @@ class BaseTrainer:
         _model = torch.load(path)
         if isinstance(_model, dict):
             self.model.load_state_dict(_model)
+        elif by_weights:
+            self.model.load_state_dict(_model.state_dict())
         else:
-            if by_weights:
-                self.model.load_state_dict(_model.state_dict())
-            else:
-                self.model = _model
-        print(f'A model has been loaded from {path}')
+            self.model = _model
+        print(f"A model has been loaded from {path}")
 
     @torch.inference_mode()
     def infer_embeddings(self, data):
@@ -566,7 +566,8 @@ class BaseTrainer:
 
         """
         if data is None:
-            raise ValueError('The input to infer_embeddings cannot be None.')
+            msg = "The input to infer_embeddings cannot be None."
+            raise ValueError(msg)
         if isinstance(data, DataLoader):
             return self.infer_one_epoch(data, self.model.encoder)
         else:
