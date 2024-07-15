@@ -1,7 +1,7 @@
 import inspect
 import os
 from os.path import join
-from typing import Optional, Union
+from typing import Any, Optional, Union
 from warnings import warn
 
 import numpy as np
@@ -18,20 +18,23 @@ class BaseTrainer:
     """Base class for Trainer."""
 
     def __init__(
-        self, train_args: dict, homepath: str = "./", device: Optional[str] = None, model: Optional = None, **kwargs
+        self, train_args: dict, homepath: str = "./", device: Optional[str] = None, model: Optional[Any] = None,
     ) -> None:
-        """Base class for trainer.
+        """Initialize the Trainer with training arguments and configurations.
 
         Parameters
         ----------
         train_args : dict
-            Training arguments
-        homepath : str
-            Path where training results will be saved
-        device : str
-            Specify device; e.g. cpu, cuda, cuda:0 etc.
-        model : Optional[torch.nn.Module] instance
-            An autoencoder model instance
+            A dictionary containing training arguments.
+        homepath : str, optional
+            The path where training results will be saved. Default is "./".
+        device : Optional[str], optional
+            The device to use for training, e.g., "cpu", "cuda", "cuda:0". Default is None.
+        model : Optional[torch.nn.Module], optional
+            An autoencoder model instance. Default is None.
+        **kwargs
+            Additional keyword arguments.
+
         """
         if device is None:
             self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -55,7 +58,7 @@ class BaseTrainer:
 
         Parameters
         ----------
-        - model: The model object to be initialized.
+        model: The model object to be initialized.
 
         """
         self.model = model
