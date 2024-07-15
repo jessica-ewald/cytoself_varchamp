@@ -55,7 +55,7 @@ default_block_args = [
         "expand_ratio": 6,
         "kernel": 3,
         "stride": 2,
-        'input_channels': 40,
+        "input_channels": 40,
         'out_channels': 80,
         'num_layers': 3,
     },
