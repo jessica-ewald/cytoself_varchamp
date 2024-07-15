@@ -6,7 +6,7 @@ from typing import Any, Callable, List, Optional, Sequence
 from torch import Tensor, nn
 from torchvision.models._utils import _make_divisible
 from torchvision.ops import StochasticDepth
-from torchvision.ops.misc import ConvNormActivation, SqueezeExcitation
+from torchvision.ops.misc import Conv2dNormActivation, SqueezeExcitation
 from torchvision.utils import _log_api_usage_once
 
 """
@@ -28,33 +28,33 @@ __all__ = [
 
 default_block_args = [
     {
-        'expand_ratio': 1,
-        'kernel': 3,
-        'stride': 1,
-        'input_channels': 32,
-        'out_channels': 16,
-        'num_layers': 1,
+        "expand_ratio": 1,
+        "kernel": 3,
+        "stride": 1,
+        "input_channels": 32,
+        "out_channels": 16,
+        "num_layers": 1,
     },
     {
-        'expand_ratio': 6,
-        'kernel': 3,
-        'stride': 2,
-        'input_channels': 16,
-        'out_channels': 24,
-        'num_layers': 2,
+        "expand_ratio": 6,
+        "kernel": 3,
+        "stride": 2,
+        "input_channels": 16,
+        "out_channels": 24,
+        "num_layers": 2,
     },
     {
-        'expand_ratio': 6,
-        'kernel': 5,
-        'stride': 2,
-        'input_channels': 24,
-        'out_channels': 40,
-        'num_layers': 2,
+        "expand_ratio": 6,
+        "kernel": 5,
+        "stride": 2,
+        "input_channels": 24,
+        "out_channels": 40,
+        "num_layers": 2,
     },
     {
-        'expand_ratio': 6,
-        'kernel': 3,
-        'stride': 2,
+        "expand_ratio": 6,
+        "kernel": 3,
+        "stride": 2,
         'input_channels': 40,
         'out_channels': 80,
         'num_layers': 3,
@@ -139,7 +139,8 @@ class MBConv(nn.Module):
         super().__init__()
 
         if not (1 <= cnf.stride <= 2):
-            raise ValueError("illegal stride value")
+            msg = "illegal stride value"
+            raise ValueError(msg)
 
         self.use_res_connect = cnf.stride == 1 and cnf.input_channels == cnf.out_channels
 
@@ -150,7 +151,7 @@ class MBConv(nn.Module):
         expanded_channels = cnf.adjust_channels(cnf.input_channels, cnf.expand_ratio)
         if expanded_channels != cnf.input_channels:
             layers.append(
-                ConvNormActivation(
+                Conv2dNormActivation(
                     cnf.input_channels,
                     expanded_channels,
                     kernel_size=1,
@@ -161,7 +162,7 @@ class MBConv(nn.Module):
 
         # depthwise
         layers.append(
-            ConvNormActivation(
+            Conv2dNormActivation(
                 expanded_channels,
                 expanded_channels,
                 kernel_size=cnf.kernel,
@@ -184,7 +185,7 @@ class MBConv(nn.Module):
 
         # project
         layers.append(
-            ConvNormActivation(
+            Conv2dNormActivation(
                 expanded_channels,
                 cnf.out_channels,
                 kernel_size=1,
@@ -258,7 +259,7 @@ class EfficientNet(nn.Module):
         if in_channels is not None:
             firstconv_output_channels = inverted_residual_setting[0].input_channels
             layers.append(
-                ConvNormActivation(
+                Conv2dNormActivation(
                     in_channels,
                     firstconv_output_channels,
                     kernel_size=3,
@@ -293,7 +294,7 @@ class EfficientNet(nn.Module):
         # building the last layer
         if out_channels is not None:
             layers.append(
-                ConvNormActivation(
+                Conv2dNormActivation(
                     inverted_residual_setting[-1].out_channels,
                     out_channels,
                     kernel_size=1,
