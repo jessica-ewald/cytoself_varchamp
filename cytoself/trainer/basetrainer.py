@@ -1,6 +1,5 @@
 import inspect
 import os
-from copy import deepcopy
 from os.path import join
 from typing import Optional, Union
 from warnings import warn
@@ -439,7 +438,6 @@ class BaseTrainer:
                     _vloss = np.nan_to_num(val_metrics['val_loss'].iloc[-1])
                     if _vloss < best_vloss:
                         best_vloss = _vloss
-                        self.best_model = deepcopy(self.model)
                         # Save the best model checkpoint
                         self.save_checkpoint()
                         count_early_stop = 0
