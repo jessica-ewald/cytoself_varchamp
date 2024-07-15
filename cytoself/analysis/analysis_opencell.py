@@ -6,6 +6,7 @@ import colorcet as cc
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+import pandas as pd
 from matplotlib import cm
 from numpy.typing import ArrayLike
 from torch.utils.data import DataLoader
@@ -164,9 +165,14 @@ class AnalysisOpenCell(BaseAnalysis):
         """
         if unique_groups is None:
             if group_annotation is None:
+                label_data = np.where(pd.isnull(label_data), "None", label_data)
                 unique_groups = np.unique(label_data[:, group_col])
+                filter_mask = np.array([(item != "None") and (";" not in item) for item in unique_groups])
+                unique_groups = unique_groups[filter_mask]
             else:
                 unique_groups = np.unique(group_annotation[:, 1])
+                filter_mask = np.array([(item != "None") and (";" not in item) for item in unique_groups])
+                unique_groups = unique_groups[filter_mask]
         label_converted = label_data[:, group_col].astype(object)
         if group_annotation is not None:
             label_converted[:] = 'others'
@@ -257,16 +263,6 @@ class AnalysisOpenCell(BaseAnalysis):
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         hndls, names = ax.get_legend_handles_labels()
-        leg = ax.legend(
-            hndls,
-            names,
-            prop={'size': 6},
-            bbox_to_anchor=(1, 1),
-            loc='upper left',
-            ncol=1 + len(names) // 20,
-            frameon=False,
-        )
-
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         ax.set_title(title)

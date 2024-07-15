@@ -143,16 +143,6 @@ def plot_umap_with_cluster_score(
         ind = names.index('others')
         names[ind:-1], names[-1] = names[ind + 1 :], names[ind]
         hndls[ind:-1], hndls[-1] = hndls[ind + 1 :], hndls[ind]
-    leg = ax.legend(
-        hndls,
-        names,
-        prop={'size': 6},
-        bbox_to_anchor=(1, 1),
-        loc='upper left',
-        ncol=1 + len(names) // 20,
-        frameon=False,
-    )
-
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_title(title + f'\ncluster score {cluster_score}')
