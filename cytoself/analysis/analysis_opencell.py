@@ -5,8 +5,8 @@ from typing import Optional, Union
 import colorcet as cc
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 import pandas as pd
+import seaborn as sns
 from matplotlib import cm
 from numpy.typing import ArrayLike
 from torch.utils.data import DataLoader

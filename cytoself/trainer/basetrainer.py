@@ -15,9 +15,7 @@ from tqdm import tqdm
 
 
 class BaseTrainer:
-    """
-    Base class for Trainer
-    """
+    """ Base class for Trainer."""
 
     def __init__(
         self, train_args: dict, homepath: str = './', device: Optional[str] = None, model: Optional = None, **kwargs
@@ -55,7 +53,7 @@ class BaseTrainer:
 
     def _init_model(self, model):
         """
-        Initializes model
+        Initializes model.
 
         Parameters
         ----------
