@@ -11,8 +11,8 @@ from cytoself.trainer.utils.plot_history import plot_history_cytoself
 
 # 1. Prepare Data
 data_ch = ["pro", "nuc"]
-datapath = "/dgx1nas1/storage/data/jess/repos/cytoself_varchamp/sample_data"
-outputpath = "/dgx1nas1/storage/data/jess/cytoself/trained_models/demo_output"
+datapath = "/dgx1nas1/storage/data/jess/cytoself/model_data"
+outputpath = "/dgx1nas1/storage/data/jess/cytoself/trained_models"
 model_nm = "data_opencell"
 
 # Define datamanager

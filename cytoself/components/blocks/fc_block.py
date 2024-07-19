@@ -21,8 +21,7 @@ class FCblock(nn.Module):
         act: str = 'relu',
         last_activation: str = 'softmax',
     ):
-        """
-        A block of fully connected layers
+        """A block of fully connected layers.
 
         Parameters
         ----------
