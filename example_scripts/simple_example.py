@@ -11,14 +11,13 @@ from cytoself.trainer.utils.plot_history import plot_history_cytoself
 
 # 1. Prepare Data
 data_ch = ["pro", "nuc"]
-datapath = "/dgx1nas1/storage/data/jess/cytoself/model_data"
+datapath = "/dgx1nas1/storage/data/jess/cytoself/varchamp_data/model_input"
 outputpath = "/dgx1nas1/storage/data/jess/cytoself/trained_models"
-model_nm = "data_opencell"
+model_nm = "varchamp_v1"
 
 # Define datamanager
 datamanager = DataManagerOpenCell(datapath, data_ch, fov_col=None)
 datamanager.const_dataloader(batch_size=32, label_name_position=1)
-
 
 model_args = {
     "input_shape": (2, 100, 100),
@@ -89,7 +88,7 @@ fig.tight_layout()
 fig.show()
 fig.savefig(Path(analysis.savepath_dict["feature_spectra_figures"]) / "feature_spectrum.png", dpi=300)
 
-# 3.3 Plot UMAP
+""" # 3.3 Plot UMAP
 umap_data = analysis.plot_umap_of_embedding_vector(
     data_loader=datamanager.test_loader,
     group_col=2,
@@ -100,4 +99,4 @@ umap_data = analysis.plot_umap_of_embedding_vector(
     s=0.3,
     alpha=0.5,
     show_legend=True,
-)
+) """

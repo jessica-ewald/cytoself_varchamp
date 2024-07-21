@@ -1,0 +1,20 @@
+------ Root dir filling up ------
+dgx root dir is 91% full. I have 6.8GB stored there. It's mostly:
+./.cache = 4.6GB
+./.vscode-server = 2.2GB
+
+How do I stop these from storing files in my home directory instead of dgxnas1?
+
+
+------ Zarr files taking up way more space -------
+My .zarr files are taking up ~5x as much space as the .tiff version. My understanding is that it should be smaller. 
+Can look at several things: did re-scaling change the number of decimals/data type?
+If so, can I round/convert to a different type?
+Zarr supports compression. Does this help? 
+If I convert, does it take way longer to access data from compressed files?
+
+
+------ /dgxnas1 is almost full -------
+89% full - 2.4T of space remaining.
+The 'dgxnas1/cellpainting-datasets' dir has several very large datasets - seems like it's from Juan Caicedo. 
+Can we delete any of these? 

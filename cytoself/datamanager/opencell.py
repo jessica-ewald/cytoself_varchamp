@@ -1,14 +1,23 @@
+"""Create datamanager object.
+
+Load all labels and images, split into training, testing, and validation. Compute data variance.
+
+"""
+
+from __future__ import annotations
+
+import logging
 from copy import copy
 from glob import glob
 from os.path import basename, dirname, join
-from typing import List, Optional, Sequence, Union
+from pathlib import Path
+from typing import TYPE_CHECKING, Sequence
 
 import numpy as np
 import pandas as pd
 import torch
 from joblib import Parallel, delayed
 from numpy.distutils.misc_util import is_sequence
-from numpy.typing import ArrayLike
 from pandas import DataFrame
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -18,23 +27,28 @@ from cytoself.datamanager.base import DataManagerBase
 from cytoself.datamanager.preloaded_dataset import PreloadedDataset
 from cytoself.datamanager.utils.splitdata_on_fov import splitdata_on_fov
 
+if TYPE_CHECKING:
+    from numpy.typing import ArrayLike
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
 
 class DataManagerOpenCell(DataManagerBase):
-    """
-    Manages training, validation and test data for OpenCell data.
-    """
+    """Manages training, validation and test data for OpenCell data."""
 
     def __init__(
         self,
         basepath: str,
-        channel_list: List,
+        channel_list: list,
         data_split: tuple = (0.82, 0.098, 0.082),
         label_col: int = 0,
-        fov_col: Optional[int] = -1,
+        fov_col: int | None = -1,
         shuffle_seed: int = 1,
-        intensity_adjustment: Optional[dict] = None,
-    ):
-        """
+        intensity_adjustment: dict | None = None,
+    ) -> None:
+        """Initialize datamanager object.
+
         Parameters
         ----------
         basepath : str
@@ -51,6 +65,7 @@ class DataManagerOpenCell(DataManagerBase):
             Rnadom seed to shuffle data
         intensity_adjustment : dict
             Intensity adjustment for each channel.
+
         """
         super().__init__(basepath=basepath, data_split=data_split, shuffle_seed=shuffle_seed)
         self.label_col = label_col
@@ -61,13 +76,13 @@ class DataManagerOpenCell(DataManagerBase):
         self.test_variance = None
 
         # Make sure label is in the list as data splitting depends on label information.
-        if 'label' not in channel_list:
+        if "label" not in channel_list:
             channel_list = copy(channel_list)
-            channel_list.append('label')
+            channel_list.append("label")
         self.channel_list = channel_list
 
         # Intensity adjustment is needed when using nucdist.
-        intensity_adjustment_default = {'pro': 1, 'nuc': 1, 'nucdist': 0.01}
+        intensity_adjustment_default = {"pro": 1, "nuc": 1, "nucdist": 0.01}
         if isinstance(intensity_adjustment, dict):
             self.intensity_adjustment = intensity_adjustment
         else:
@@ -78,14 +93,14 @@ class DataManagerOpenCell(DataManagerBase):
 
     def determine_load_paths(
         self,
-        labels_toload: Sequence[str] = None,
-        labels_tohold: Sequence[str] = None,
-        num_labels: Optional[int] = None,
+        labels_toload: Sequence[str] | None = None,
+        labels_tohold: Sequence[str] | None = None,
+        num_labels: int | None = None,
         label_name_position: int = -2,
-        suffix: Union[str, Sequence] = 'label',
+        suffix: str | Sequence = "label",
     ):
-        """
-        Reorganizes the loading DataFrame with designated labels.
+        """Reorganizes the loading DataFrame with designated labels.
+
         Loading list can be reorganized by plugging label names exclusively to be included or excluded as well as
         the total number of labels.
 
@@ -111,9 +126,9 @@ class DataManagerOpenCell(DataManagerBase):
         if labels_toload:
             ind0 = (
                 file_df.iloc[:, 0]
-                .str.split('/', expand=True)
+                .str.split("/", expand=True)
                 .iloc[:, -1]
-                .str.split('_', expand=True)
+                .str.split("_", expand=True)
                 .iloc[:, label_name_position]
                 .isin(labels_toload)
             )
@@ -121,9 +136,9 @@ class DataManagerOpenCell(DataManagerBase):
         if labels_tohold:
             ind0 = (
                 file_df.iloc[:, 0]
-                .str.split('/', expand=True)
+                .str.split("/", expand=True)
                 .iloc[:, -1]
-                .str.split('_', expand=True)
+                .str.split("_", expand=True)
                 .iloc[:, label_name_position]
                 .isin(labels_tohold)
             )
@@ -131,8 +146,7 @@ class DataManagerOpenCell(DataManagerBase):
         return file_df.iloc[:num_labels]
 
     def _load_data_multi(self, df_toload: DataFrame):
-        """
-        Load numpy files with multiprocessing
+        """Load numpy files with multiprocessing.
 
         Parameters
         ----------
@@ -146,32 +160,30 @@ class DataManagerOpenCell(DataManagerBase):
         """
         image_all, label_all = [], []
         for ch in self.channel_list:
-            print(f'Loading {ch} data...')
+            msg = f"Loading {ch} data..."
+            logging.info(msg)
+
             results = Parallel(n_jobs=self.num_workers)(
-                delayed(np.load)(row[ch], allow_pickle=ch == 'label')
+                delayed(np.load)(row[ch], allow_pickle=ch == "label")
                 for _, row in tqdm(df_toload.iterrows(), total=len(df_toload))
             )
-            if ch == 'label':
+            if ch == "label":
                 label_all = np.vstack(results)
             else:
-                if results[0].ndim == 3:
-                    d = np.vstack(results)[..., np.newaxis]
-                else:
-                    d = np.vstack(results)
+                d = np.vstack(results)[..., np.newaxis] if results[0].ndim == 3 else np.vstack(results)
                 if ch in self.intensity_adjustment:
                     d *= self.intensity_adjustment[ch]
                 else:
-                    print('Channel not found in intensity balance.')
+                    logging.warning("Channel not found in intensity balance.")
                 image_all.append(d)
         if len(image_all) > 0:
             image_all = np.concatenate(image_all, axis=-1)
         else:
-            print('No image data was loaded.')
+            logging.warning("No image data was loaded.")
         return image_all, label_all
 
     def split_data(self, label_data: ArrayLike):
-        """
-        Split data into train, validation and test sets.
+        """Split data into train, validation and test sets.
 
         Parameters
         ----------
@@ -184,10 +196,10 @@ class DataManagerOpenCell(DataManagerBase):
 
         """
         # Split data
-        print('Splitting data...')
+        logging.info("Splitting data...")
         if self.fov_col is None:
-            np.random.seed(self.shuffle_seed)
-            ind = np.random.choice(len(label_data), size=len(label_data), replace=False)
+            np.random.Generator(self.shuffle_seed)
+            ind = np.random.Generator(len(label_data), size=len(label_data), replace=False)
             split_ind = list(np.cumsum([int(len(label_data) * i) for i in self.data_split[:-1]]))
             train_ind = ind[0 : split_ind[0]]
             val_ind = ind[split_ind[0] : split_ind[1]]
@@ -203,9 +215,9 @@ class DataManagerOpenCell(DataManagerBase):
             )
         return train_ind, val_ind, test_ind
 
-    def const_label_book(self, label_data: ArrayLike):
-        """
-        Constructs label book for classification tasks
+    def const_label_book(self, label_data: ArrayLike) -> np.array:
+        """Construct label book for classification tasks.
+
         This function creates an array of unique labels whose index becomes the label for the classification tasks.
 
         Parameters
@@ -220,7 +232,7 @@ class DataManagerOpenCell(DataManagerBase):
         self,
         batch_size: int = 32,
         num_workers: int = 4,
-        transform: Optional[Sequence] = (
+        transform: Sequence | None = (
             transforms.RandomApply(
                 [
                     lambda x: transforms.functional.rotate(x, 0),
@@ -229,21 +241,19 @@ class DataManagerOpenCell(DataManagerBase):
                     lambda x: transforms.functional.rotate(x, 270),
                 ]
             ),
-            # transforms.RandomRotation(180, interpolation=transforms.InterpolationMode.BILINEAR),
             transforms.RandomVerticalFlip(),
             transforms.RandomHorizontalFlip(),
         ),
-        labels_toload: Optional[Sequence[str]] = None,
-        labels_tohold: Optional[Sequence[str]] = None,
-        num_labels: Optional[int] = None,
-        label_format: Optional[str] = 'index',
+        labels_toload: Sequence[str] | None = None,
+        labels_tohold: Sequence[str] | None = None,
+        num_labels: int | None = None,
+        label_format: str | None = "index",
         label_name_position: int = -2,
         shuffle: bool = True,
         shuffle_test: bool = False,
         **kwargs,
     ):
-        """
-        Loads and splits data into training, validation and test data, followed by DataLoader construction.
+        """Load and split data into training, validation and test data, followed by DataLoader construction.
 
         Parameters
         ----------
@@ -273,7 +283,7 @@ class DataManagerOpenCell(DataManagerBase):
         transform_all = transforms.Compose([torch.from_numpy] + ([] if transform is None else list(transform)))
         # Determine which npy files to load.
         df_toload = self.determine_load_paths(
-            labels_toload, labels_tohold, num_labels, label_name_position, self.channel_list
+            labels_toload, labels_tohold, num_labels, label_name_position, self.channel_list,
         )
 
         # Load data
@@ -289,10 +299,7 @@ class DataManagerOpenCell(DataManagerBase):
 
         if len(train_ind) > 0:
             train_label = label_all[train_ind]
-            if len(image_all) > 0:
-                train_data = image_all[train_ind]
-            else:
-                train_data = []
+            train_data = image_all[train_ind] if len(image_all) > 0 else []
             train_dataset = PreloadedDataset(
                 train_label, train_data, transform_all, self.unique_labels, label_format, self.label_col
             )
@@ -300,62 +307,55 @@ class DataManagerOpenCell(DataManagerBase):
             self.train_loader = DataLoader(
                 train_dataset, batch_size, shuffle=shuffle, num_workers=self.num_workers, **kwargs
             )
-            print('Computing variance of training data...')
+            logging.info("Computing variance of training data...")
             self.train_variance = np.var(train_data).item()
         if len(val_ind) > 0:
             val_label = label_all[val_ind]
-            if len(image_all) > 0:
-                val_data = image_all[val_ind]
-            else:
-                val_data = []
+            val_data = image_all[val_ind] if len(image_all) > 0 else []
             val_dataset = PreloadedDataset(
-                val_label, val_data, transform_all, self.unique_labels, label_format, self.label_col
+                val_label, val_data, transform_all, self.unique_labels, label_format, self.label_col,
             )
             _assert_dtype(val_dataset.label, val_dataset.label_format)
             self.val_loader = DataLoader(
-                val_dataset, batch_size, shuffle=shuffle, num_workers=self.num_workers, **kwargs
+                val_dataset, batch_size, shuffle=shuffle, num_workers=self.num_workers, **kwargs,
             )
-            print('Computing variance of validation data...')
+            logging.info("Computing variance of validation data...")
             self.val_variance = np.var(val_data).item()
         if len(test_ind) > 0:
             test_label = label_all[test_ind]
-            if len(image_all) > 0:
-                test_data = image_all[test_ind]
-            else:
-                test_data = []
+            test_data = image_all[test_ind] if len(image_all) > 0 else []
             test_dataset = PreloadedDataset(
-                test_label, test_data, None, self.unique_labels, label_format, self.label_col
+                test_label, test_data, None, self.unique_labels, label_format, self.label_col,
             )
             _assert_dtype(test_dataset.label, test_dataset.label_format)
             self.test_loader = DataLoader(
-                test_dataset, batch_size, shuffle=shuffle_test, num_workers=self.num_workers, **kwargs
+                test_dataset, batch_size, shuffle=shuffle_test, num_workers=self.num_workers, **kwargs,
             )
-            print('Computing variance of test data...')
+            logging.info("Computing variance of test data...")
             self.test_variance = np.var(test_data).item()
 
     @staticmethod
-    def download_sample_data(output: Optional[str] = 'sample_data'):
-        """
-        Download sample data
+    def download_sample_data(output: str | None = "sample_data"):
+        """Download sample data.
 
         Parameters
         ----------
         output : str
             Destination path
         ----------
+
         """
         import gdown
 
         gdown.download_folder(
-            url='https://drive.google.com/drive/folders/1tCgFlcyBg8p7241eowlDi7EsUmiR42h9',
+            url="https://drive.google.com/drive/folders/1tCgFlcyBg8p7241eowlDi7EsUmiR42h9",
             output=output,
             quiet=False,
         )
 
 
 def _assert_dtype(label, label_format):
-    """
-    Asserts dtype for DataLoader
+    """Assert dtype for DataLoader.
 
     Parameters
     ----------
@@ -374,12 +374,12 @@ def _assert_dtype(label, label_format):
         and isinstance(label, np.ndarray)
         and not (np.issubdtype(label.dtype, np.number) or np.issubdtype(label.dtype, bool))
     ):
-        raise TypeError(f'label must be numerical to use dataloader, instead {label.dtype} is given.')
+        msg = f"label must be numerical to use dataloader, instead {label.dtype} is given."
+        raise TypeError(msg)
 
 
-def get_file_df(basepath: str, suffix: Union[str, Sequence] = 'label', extension: str = 'npy'):
-    """
-    Creates a DataFrame of data paths.
+def get_file_df(basepath: str, suffix: str | Sequence = "label", extension: str = "npy") -> pd.DataFrame:
+    """Create a DataFrame of data paths.
 
     Parameters
     ----------
@@ -395,17 +395,18 @@ def get_file_df(basepath: str, suffix: Union[str, Sequence] = 'label', extension
     A DataFrame of data paths to load.
 
     """
-    df = pd.DataFrame()
+    path_df = pd.DataFrame()
     if isinstance(suffix, str):
-        df[suffix] = sorted(glob(join(basepath, '*_' + suffix + '.' + extension)))
+        path_df[suffix] = sorted(Path(basepath).glob(f"*_{suffix}.{extension}"))
     elif is_sequence(suffix):
-        filelist = sorted(glob(join(basepath, '*_' + suffix[0] + '.' + extension)))
-        df[suffix[0]] = filelist
+        filelist = sorted(Path(basepath).glob(f"*_{suffix[0]}.{extension}"))
+        path_df[suffix[0]] = filelist
         for sf in suffix[1:]:
             flist = []
             for p in filelist:
-                flist.append(join(dirname(p), '_'.join(basename(p).split('_')[:-1]) + '_' + sf + '.' + extension))
-            df[sf] = flist
+                flist.append(join(dirname(p), "_".join(basename(p).split("_")[:-1]) + "_" + sf + "." + extension))
+            path_df[sf] = flist
     else:
-        raise TypeError('Only str or list is accepted for suffix.')
-    return df
+        msg = "Only str or list is accepted for suffix."
+        raise TypeError(msg)
+    return path_df
