@@ -17,9 +17,7 @@ from cytoself.analysis.utils.pearson_correlation import selfpearson_multi
 
 
 class AnalysisOpenCell(BaseAnalysis):
-    """
-    Analysis class for OpenCell data
-    """
+    """Analysis class for OpenCell data."""
 
     def __init__(self, datamanager, trainer, homepath: Optional[str] = None, **kwargs):
         super().__init__(datamanager, trainer, homepath, **kwargs)
@@ -35,11 +33,10 @@ class AnalysisOpenCell(BaseAnalysis):
         group_col: int = 1,
         unique_groups: Optional = None,
         group_annotation: Optional = None,
-        savepath_embeddings: Optional[str] = 'default',
+        savepath_embeddings: Optional[str] = "default",
         **kwargs,
     ):
-        """
-        Generate a UMAP plotting from embeddings
+        """Generate a UMAP plotting from embeddings.
 
         Parameters
         ----------
@@ -65,7 +62,8 @@ class AnalysisOpenCell(BaseAnalysis):
         """
         if data_loader is None:
             if label_data is None:
-                raise ValueError('label_data cannot be None. Provide a 2D-array to label_data.')
+                msg = "label_data cannot be None. Provide a 2D-array to label_data."
+                raise ValueError(msg)
         else:
             label_data = data_loader.dataset.label
 
@@ -90,8 +88,7 @@ class AnalysisOpenCell(BaseAnalysis):
         savepath_embeddings: Optional[str] = 'default',
         **kwargs,
     ):
-        """
-        Compute UMAP
+        """Compute UMAP.
 
         Parameters
         ----------
@@ -110,7 +107,7 @@ class AnalysisOpenCell(BaseAnalysis):
 
         """
         if embedding_data is None:
-            print('Computing embeddings from image...')
+            print("Computing embeddings from image...")
             embedding_data = self.trainer.infer_embeddings(
                 image_data if data_loader is None else data_loader,
                 **{a: kwargs[a] for a in inspect.signature(self.trainer.infer_embeddings).parameters if a in kwargs},
@@ -118,19 +115,18 @@ class AnalysisOpenCell(BaseAnalysis):
             if isinstance(embedding_data, tuple) and len(embedding_data) > 1:
                 embedding_data = embedding_data[0]
             if savepath_embeddings is not None:
-                if savepath_embeddings == 'default':
-                    savepath_embeddings = self.trainer.savepath_dict['embeddings']
-                if 'output_layer' in kwargs:
-                    fname = kwargs['output_layer']
+                if savepath_embeddings == "default":
+                    savepath_embeddings = self.trainer.savepath_dict["embeddings"]
+                if "output_layer" in kwargs:
+                    fname = kwargs["output_layer"]
+                elif "output_layer" in inspect.signature(self.trainer.infer_embeddings).parameters:
+                    fname = inspect.signature(self.trainer.infer_embeddings).parameters["output_layer"].default
                 else:
-                    if 'output_layer' in inspect.signature(self.trainer.infer_embeddings).parameters:
-                        fname = inspect.signature(self.trainer.infer_embeddings).parameters['output_layer'].default
-                    else:
-                        fname = 'embeddings_for_umap'
+                    fname = "embeddings_for_umap"
                 np.save(join(savepath_embeddings, fname + '.npy'), embedding_data)
-                print(f'embeddings {fname} have been saved at ' + savepath_embeddings)
+                print(f"embeddings {fname} have been saved at " + savepath_embeddings)
 
-        print('Computing UMAP coordinates from embeddings...')
+        print("Computing UMAP coordinates from embeddings...")
         umap_data = self._transform_umap(
             embedding_data,
             **{a: kwargs[a] for a in inspect.signature(self._transform_umap).parameters if a in kwargs},
@@ -144,8 +140,7 @@ class AnalysisOpenCell(BaseAnalysis):
         unique_groups: Optional = None,
         group_annotation: Optional = None,
     ):
-        """
-        Generate labels that have group annotations
+        """Generate labels that have group annotations.
 
         Parameters
         ----------
@@ -198,8 +193,7 @@ class AnalysisOpenCell(BaseAnalysis):
         dpi: int = 300,
         figsize: tuple[float, float] = (6, 5),
     ):
-        """
-        Plot a UMAP by annotating groups in different colors
+        """Plot a UMAP by annotating groups in different colors.
 
         Parameters
         ----------
@@ -279,8 +273,7 @@ class AnalysisOpenCell(BaseAnalysis):
         label_col: int = 0,
         savepath: Optional[str] = None,
     ):
-        """
-        Compute the matrix of cell line ID vs. vq index occurrence per image.
+        """Compute the matrix of cell line ID vs. vq index occurrence per image.
         This is needed to compute feature heatmap.
 
         Parameters

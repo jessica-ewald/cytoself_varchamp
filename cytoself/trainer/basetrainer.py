@@ -514,8 +514,7 @@ class BaseTrainer:
     def save_model(
         self, path: str, filename: str = 'pytorch_model.pt', model: Optional[nn.Module] = None, by_weights: bool = False
     ):
-        """
-        Save a pytorch model
+        """Save a pytorch model.
 
         Parameters
         ----------

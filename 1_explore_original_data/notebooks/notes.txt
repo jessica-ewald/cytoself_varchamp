@@ -18,3 +18,16 @@ If I convert, does it take way longer to access data from compressed files?
 89% full - 2.4T of space remaining.
 The 'dgxnas1/cellpainting-datasets' dir has several very large datasets - seems like it's from Juan Caicedo. 
 Can we delete any of these? 
+
+
+
+------ Things to try with Cytoself ------
+-Make UMAP with CP features after applying all of the filtering steps
+-Annotate UMAP organelles
+-Compare AUROC, cell count p-val, intensity p-val and see whether embeddings are really localization-specific
+-Train model with pooled-rare data
+-Organize scripts: make a folder for each dataset, and include .py script for training the model & analyzing the results
+-Try train with more channels (perhaps use the pooled-rare for this, if it works, since we don't have the confocal issue? However this one has very few alleles)
+-Try use pre-trained model - we have 3 datasets: OpenCell, Varchamp, and pooled-rare. Does combining all of the data make it better? Or worse?
+-If we can train together ... OpenCell is a different cell line. Would be interesting to see which overlapping genes have similar vs. different localization.
+-Try without protein channel - does the model still learn something useful? If so, it could be used for other morphology-only datasets.

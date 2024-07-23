@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import logging
 from copy import copy
-from glob import glob
 from os.path import basename, dirname, join
 from pathlib import Path
 from typing import TYPE_CHECKING, Sequence
@@ -198,8 +197,8 @@ class DataManagerOpenCell(DataManagerBase):
         # Split data
         logging.info("Splitting data...")
         if self.fov_col is None:
-            np.random.Generator(self.shuffle_seed)
-            ind = np.random.Generator(len(label_data), size=len(label_data), replace=False)
+            np.random.seed(self.shuffle_seed)
+            ind = np.random.choice(len(label_data), size=len(label_data), replace=False)
             split_ind = list(np.cumsum([int(len(label_data) * i) for i in self.data_split[:-1]]))
             train_ind = ind[0 : split_ind[0]]
             val_ind = ind[split_ind[0] : split_ind[1]]
