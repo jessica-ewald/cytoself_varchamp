@@ -23,10 +23,8 @@ Can we delete any of these?
 
 ------ Things to try with Cytoself ------
 ________TO DO _________
--Make UMAP with CP features after applying all of the filtering steps
 -Compare AUROC, cell count p-val, intensity p-val and see whether embeddings are really localization-specific
 -Train model with pooled-rare data
--Organize scripts: make a folder for each dataset, and include .py script for training the model & analyzing the results
 -Try train with more channels (perhaps use the pooled-rare for this, if it works, since we don't have the confocal issue? However this one has very few alleles)
 -Try use pre-trained model - we have 3 datasets: OpenCell, Varchamp, and pooled-rare. Does combining all of the data make it better? Or worse?
 -If we can train together ... OpenCell is a different cell line. Would be interesting to see which overlapping genes have similar vs. different localization.
@@ -35,3 +33,5 @@ ________TO DO _________
 
 ________DONE_________
 -Annotate UMAP organelles - basic first pass
+-Make UMAP with CP features after applying all of the filtering steps
+-Organize scripts: make a folder for each dataset, and include .py script for training the model & analyzing the results
