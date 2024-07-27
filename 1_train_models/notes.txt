@@ -24,7 +24,7 @@ Can we delete any of these?
 ------ Things to try with Cytoself ------
 ________TO DO _________
 -Compare AUROC, cell count p-val, intensity p-val and see whether embeddings are really localization-specific
--Train model with pooled-rare data
+-Train model with pooled-rare data: need to re-scale .zarr files .. takes too long to rescale on each img query
 -Try train with more channels (perhaps use the pooled-rare for this, if it works, since we don't have the confocal issue? However this one has very few alleles)
 -Try use pre-trained model - we have 3 datasets: OpenCell, Varchamp, and pooled-rare. Does combining all of the data make it better? Or worse?
 -If we can train together ... OpenCell is a different cell line. Would be interesting to see which overlapping genes have similar vs. different localization.

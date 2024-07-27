@@ -10,26 +10,11 @@ For each allele:
 import numpy as np
 import polars as pl
 import zarr
-from skimage import exposure
 from tqdm import tqdm
 
 well_dict = {"WellB3": "RD3_WellB3_DMSO_WellB3",
                 "WellB4": "RD3_WellB4_BRD4780_WellB4",
                 "WellB5": "RD3_WellB5_SB505124_WellB5"}
-
-
-def rescale_img(img: zarr.Array) -> np.ndarray:
-    """Rescale the intensity of an image.
-
-    Parameters
-    ----------
-    img : Array
-        Raw pixel values
-
-    """
-    vmin = np.min(img)
-    vmax = np.percentile(img, 99)
-    return exposure.rescale_intensity(img, in_range=(vmin, vmax), out_range=(0, 1))
 
 
 def crop_allele(allele: str, profile_df: pl.DataFrame, img_dir: str, out_dir: str) -> None:
@@ -73,10 +58,6 @@ def crop_allele(allele: str, profile_df: pl.DataFrame, img_dir: str, out_dir: st
         gfp_img = zarr.open(gfp_path)
         dna_img = zarr.open(dna_path)
 
-        # rescale images
-        gfp_img = rescale_img(gfp_img)
-        dna_img = rescale_img(dna_img)
-
         for row in site_df.iter_rows(named=True):
             x1, x2 = row["x_low"], row["x_high"]
             y1, y2 = row["y_low"], row["y_high"]
@@ -103,7 +84,8 @@ def main() -> None:
     # Paths
     pooled_dir = "/dgx1nas1/storage/data/jess/pooled"
     prof_path = f"{pooled_dir}/sc_data/processed_profiles/pilot_annotated.parquet"
-    img_dir = f"{pooled_dir}/images/cc_zarr"
+    img_dir = f"{pooled_dir}/images/rescaled_zarr"
+    coords_dir = f"{pooled_dir}/images/cc_zarr"
     out_dir = "/dgx1nas1/storage/data/jess/cytoself/pooled_data/model_input"
 
     # Filter thresholds
@@ -127,7 +109,7 @@ def main() -> None:
     high_quality_barcodes = prof.select("Metadata_CellID").to_series().to_list()
 
     # Filter data
-    meta = pl.read_parquet(f"{img_dir}/cell_coords.parquet")
+    meta = pl.read_parquet(f"{coords_dir}/cell_coords.parquet")
     meta = meta.with_columns(
         pl.col("Metadata_Foci_Barcode_MatchedTo_GeneCode").str.replace(" ", "-").alias("Protein_label"),
     )
